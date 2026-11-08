@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FadeAway</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="login">
+  <form id="loginForm">
+    <img class="logo" src="logo.svg" alt="">
+    <h1>FadeAway</h1>
+    <p class="sub">Messages, voix, caméra et écran, en direct.</p>
+    <label>Pseudo
+      <input id="nameInput" maxlength="20" placeholder="Ton pseudo" autofocus autocomplete="off">
+    </label>
+    <label>Serveur
+      <input id="serverInput" placeholder="http://localhost:3000" autocomplete="off" spellcheck="false">
+    </label>
+    <button id="loginBtn">Entrer</button>
+    <div id="loginErr"></div>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <aside>
+    <div class="side-title">Messages privés</div>
+    <div id="userList"></div>
+    <div class="me"><span class="avatar" id="meAvatar"></span><span id="meName"></span></div>
+  </aside>
+
+  <main>
+    <header>
+      <span id="chatTitle">Sélectionne quelqu'un</span>
+      <button id="callBtn" class="call-btn" hidden>📞 Appeler</button>
+    </header>
+
+    <div id="incoming" hidden>
+      <span id="incomingText"></span>
+      <button id="acceptBtn" class="call-btn">Accepter</button>
+      <button id="declineBtn" class="danger">Refuser</button>
+    </div>
+
+    <section id="call" hidden>
+      <div id="tiles"></div>
+      <div id="controls">
+        <button id="muteBtn">🎤 Micro</button>
+        <button id="camBtn">📷 Caméra</button>
+        <button id="screenBtn">🖥️ Partager l'écran</button>
+        <button id="hangBtn" class="danger">Raccrocher</button>
+      </div>
+    </section>
+
+    <div id="messages"></div>
+    <form id="msgForm">
+      <input id="msgInput" placeholder="Écrire un message…" autocomplete="off" disabled>
+    </form>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

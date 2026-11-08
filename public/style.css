@@ -1,0 +1,146 @@
+:root{
+  --bg0:#14091f;
+  --accent:#ff529a;--accent2:#ffd400;--pink:#ff9e6b;
+  --text:#fff1f8;--muted:#bc9bb3;
+  --border:rgba(255,255,255,.08);
+  --red:#ff4d6d;--green:#2ee59d;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-title:'Sora','Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{font:15px/1.45 var(--font);color:var(--text);background:var(--bg0);overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* fond en dégradé qui flotte doucement */
+body::before{
+  content:"";position:fixed;inset:-10%;z-index:-1;
+  background:
+    radial-gradient(900px 600px at 8% 0%,rgba(255,82,154,.38),transparent 62%),
+    radial-gradient(800px 600px at 100% 100%,rgba(255,212,0,.24),transparent 62%),
+    radial-gradient(700px 500px at 62% 38%,rgba(255,158,107,.14),transparent 66%);
+  animation:float 22s ease-in-out infinite alternate;
+}
+@keyframes float{to{transform:translate3d(-2.5%,2.5%,0) scale(1.08)}}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:10px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.26);background-clip:content-box;border:3px solid transparent}
+
+/* ---------- boutons & champs ---------- */
+button{
+  font:inherit;font-weight:700;color:#2a0b35;border:0;border-radius:11px;padding:9px 16px;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 8px 20px -10px rgba(255,82,154,.9);
+  transition:transform .15s,filter .15s,box-shadow .15s,background .25s;
+}
+button:hover{transform:translateY(-1px);filter:brightness(1.12)}
+button:active{transform:none}
+button:disabled{opacity:.55;cursor:default;transform:none}
+button.danger{background:linear-gradient(135deg,var(--red),#ff8a5c);box-shadow:0 8px 20px -10px rgba(255,77,109,.9)}
+button.off{background:rgba(255,255,255,.09);box-shadow:none}
+button.off:hover{background:rgba(255,255,255,.16)}
+button.call-btn{background:linear-gradient(135deg,#1fcf8b,#12b5c9);box-shadow:0 8px 20px -10px rgba(46,229,157,.9)}
+
+input{
+  font:inherit;color:var(--text);width:100%;
+  background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:12px;padding:12px 14px;outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+}
+input:focus{border-color:rgba(255,82,154,.75);box-shadow:0 0 0 4px rgba(255,82,154,.18);background:rgba(255,255,255,.09)}
+input::placeholder{color:var(--muted)}
+input:disabled{opacity:.5}
+
+/* ---------- connexion ---------- */
+#login{position:fixed;inset:0;display:grid;place-items:center;z-index:10;animation:fadeIn .5s}
+#loginForm{
+  width:min(380px,92vw);padding:34px 32px;border-radius:24px;display:flex;flex-direction:column;gap:14px;
+  background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03) 60%,rgba(255,255,255,.01));
+  border:1px solid var(--border);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  box-shadow:0 30px 80px -30px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.08);
+  animation:pop .6s cubic-bezier(.2,.8,.2,1);
+}
+#loginForm h1{
+  margin:0;text-align:center;font:800 42px/1.1 var(--font-title);letter-spacing:-.02em;
+  background:linear-gradient(90deg,#fff,#ffd6e8 45%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+#loginForm .sub{margin:0 0 6px;text-align:center;color:var(--muted)}
+#loginForm label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+#loginForm label input{text-transform:none;letter-spacing:0;font-weight:400;font-size:15px}
+#loginForm button{margin-top:4px;padding:12px}
+#loginErr{min-height:1.3em;text-align:center;color:#ff7b92;font-size:13px}
+
+/* ---------- application ---------- */
+#app{display:flex;height:100%;animation:fadeIn .5s}
+aside{
+  width:264px;flex-shrink:0;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,rgba(255,82,154,.20),rgba(20,9,31,.55) 55%,rgba(20,9,31,.35));
+  border-right:1px solid var(--border);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.side-title{padding:20px 18px 10px;font:700 11px var(--font-title);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+#userList{flex:1;overflow:auto;padding:4px 10px}
+.empty{padding:10px;color:var(--muted);font-size:13px;line-height:1.5}
+.user{
+  display:flex;align-items:center;gap:11px;padding:9px 10px;margin-bottom:2px;border-radius:12px;cursor:pointer;color:var(--muted);
+  transition:background .2s,color .2s,transform .2s;
+}
+.user:hover{background:linear-gradient(90deg,rgba(255,255,255,.08),transparent);color:var(--text)}
+.user.active{background:linear-gradient(90deg,rgba(255,82,154,.35),rgba(255,82,154,.04));color:#fff}
+.user.offline{opacity:.5}
+.user .badge{margin-left:auto;min-width:20px;text-align:center;background:linear-gradient(135deg,var(--pink),var(--red));color:#fff;border-radius:10px;font-size:11px;font-weight:700;padding:2px 7px}
+
+.avatar{
+  position:relative;width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font:700 14px var(--font-title);
+  box-shadow:0 4px 12px -4px rgba(0,0,0,.6);
+}
+.avatar.on::after{content:"";position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:50%;background:var(--green);border:2.5px solid #1d0d29}
+.me{display:flex;align-items:center;gap:11px;padding:12px 16px;font-weight:600;background:linear-gradient(180deg,transparent,rgba(0,0,0,.35))}
+
+main{flex:1;min-width:0;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 35%)}
+header{
+  height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  font:700 16px var(--font-title);
+  background:linear-gradient(90deg,rgba(255,82,154,.22),rgba(255,82,154,0) 75%);
+  border-bottom:1px solid var(--border);
+}
+#incoming{display:flex;gap:10px;align-items:center;padding:12px 20px;background:linear-gradient(90deg,rgba(46,229,157,.18),transparent);animation:fadeUp .3s}
+#incomingText{flex:1;font-weight:600}
+
+#call{display:flex;flex-direction:column;max-height:58%;min-height:230px;background:linear-gradient(180deg,rgba(0,0,0,.6),rgba(0,0,0,.2));animation:fadeUp .35s}
+#tiles{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;padding:12px;overflow:auto}
+.tile{
+  position:relative;min-height:170px;border-radius:16px;overflow:hidden;display:grid;place-items:center;
+  background:linear-gradient(145deg,rgba(255,82,154,.22),rgba(255,212,0,.08));
+  border:1px solid var(--border);animation:pop .4s;
+}
+.tile video{width:100%;height:100%;object-fit:contain;background:#000}
+.tile.noVideo video{display:none}
+.tile .big{display:none;width:84px;height:84px;font-size:34px}
+.tile.noVideo .big{display:grid}
+.tile .label{position:absolute;left:10px;bottom:8px;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(0,0,0,.55);backdrop-filter:blur(6px)}
+#controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:12px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.45))}
+
+#messages{flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:4px}
+.msg{display:flex;gap:12px;padding:7px 10px;border-radius:12px;animation:fadeUp .25s;transition:background .2s}
+.msg:hover{background:linear-gradient(90deg,rgba(255,255,255,.06),transparent)}
+.msg .meta{font-weight:600}
+.msg .meta small{color:var(--muted);font-weight:400;margin-left:8px;font-size:12px}
+.msg .body{white-space:pre-wrap;word-break:break-word}
+#msgForm{padding:6px 20px 20px}
+#msgForm input{padding:14px 18px;border-radius:16px;background:rgba(255,255,255,.07)}
+
+@media(max-width:700px){
+  aside{width:74px}
+  .user .n,.side-title,.me span:last-child{display:none}
+  .user{justify-content:center}
+}
+
+/* logo */
+#loginForm .logo{width:92px;height:92px;margin:0 auto -2px;border-radius:24px;filter:drop-shadow(0 16px 26px rgba(255,82,154,.55));animation:pop .7s cubic-bezier(.2,.8,.2,1)}
+
+/* texte clair sur les boutons sombres / rouges */
+button.danger,button.off{color:#fff}

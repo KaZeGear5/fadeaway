@@ -1,0 +1,48 @@
+{
+  "name": "fadeaway",
+  "version": "0.1.0",
+  "description": "FadeAway - messages privés, voix, caméra et partage d'écran en P2P",
+  "main": "main.js",
+  "author": "KaZeGear5",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "dist": "electron-builder --win --publish never"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.fadeaway.app",
+    "productName": "FadeAway",
+    "files": [
+      "main.js",
+      "preload.js",
+      "public/**/*",
+      "build/icon.png",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "FadeAway-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://localhost:3000/updates"
+      }
+    ]
+  }
+}

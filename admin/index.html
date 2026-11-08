@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>FadeAway Admin</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg0:#14091f;--accent:#ff529a;--accent2:#ffd400;--pink:#ff9e6b;--text:#fff1f8;--muted:#bc9bb3;--border:rgba(255,255,255,.09);--red:#ff4d6d;--green:#2ee59d;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--title:'Sora','Inter',system-ui,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{font:15px/1.5 var(--font);color:var(--text);background:var(--bg0);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:-10%;z-index:-1;
+  background:radial-gradient(900px 600px at 8% 0%,rgba(255,82,154,.38),transparent 62%),
+             radial-gradient(800px 600px at 100% 100%,rgba(255,212,0,.22),transparent 62%),
+             radial-gradient(700px 500px at 62% 38%,rgba(255,158,107,.14),transparent 66%);
+  animation:float 22s ease-in-out infinite alternate}
+@keyframes float{to{transform:translate3d(-2.5%,2.5%,0) scale(1.08)}}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+button{font:inherit;font-weight:700;color:#2a0b35;border:0;border-radius:11px;padding:9px 16px;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 8px 20px -10px rgba(255,82,154,.9);
+  transition:transform .15s,filter .15s}
+button:hover{transform:translateY(-1px);filter:brightness(1.08)}
+button:disabled{opacity:.5;cursor:default;transform:none}
+button.ghost{background:rgba(255,255,255,.09);color:#fff;box-shadow:none}
+button.danger{background:linear-gradient(135deg,var(--red),#ff8a5c);color:#fff;box-shadow:none}
+button.small{padding:6px 12px;font-size:13px;border-radius:9px}
+input{font:inherit;color:var(--text);width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:12px;padding:12px 14px;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus{border-color:rgba(255,82,154,.75);box-shadow:0 0 0 4px rgba(255,82,154,.18)}
+code{background:rgba(255,255,255,.09);padding:2px 7px;border-radius:6px;font-size:13px;word-break:break-all}
+
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03) 60%,rgba(255,255,255,.01));
+  border:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:0 30px 80px -34px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.08)}
+
+/* connexion */
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+#loginForm{width:min(380px,100%);padding:34px 30px;border-radius:24px;display:flex;flex-direction:column;gap:14px;text-align:center;animation:pop .6s cubic-bezier(.2,.8,.2,1)}
+#loginForm img{width:84px;height:84px;margin:0 auto;border-radius:22px;filter:drop-shadow(0 16px 26px rgba(255,82,154,.5))}
+#loginForm h1{margin:0;font:800 30px var(--title);letter-spacing:-.02em;background:linear-gradient(90deg,#fff,#ffd6e8 45%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+#loginForm p{margin:0;color:var(--muted)}
+#err{min-height:1.3em;color:#ff7b92;font-size:13px}
+
+/* tableau de bord */
+.wrap{max-width:980px;margin:0 auto;padding:0 20px 60px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+.brand{display:flex;align-items:center;gap:12px;font:800 22px var(--title);letter-spacing:-.02em}
+.brand img{width:40px;height:40px;border-radius:11px}
+.tag{font:700 11px var(--font);letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:20px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#2a0b35}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:18px}
+.stat{padding:18px 20px;border-radius:18px;animation:fadeUp .5s both}
+.stat b{display:block;font:800 28px var(--title)}
+.stat span{color:var(--muted);font-size:13px}
+.card{padding:22px;border-radius:22px;margin-bottom:18px;animation:fadeUp .5s both}
+.card h2{margin:0 0 14px;font:700 17px var(--title)}
+.card h3{margin:22px 0 10px;font:600 13px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted);font-size:14px;margin:0 0 14px}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);animation:fadeUp .25s both}
+.row .grow{flex:1;min-width:0}
+.row .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .sub{color:var(--muted);font-size:12.5px}
+.row .actions{display:flex;gap:8px;flex-wrap:wrap}
+.avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;color:#fff;font:700 14px var(--title)}
+.empty{color:var(--muted);font-size:14px;padding:6px 2px}
+
+.drop{display:grid;place-items:center;gap:4px;text-align:center;padding:26px;border-radius:18px;border:2px dashed rgba(255,255,255,.22);cursor:pointer;margin-bottom:14px;transition:background .2s,border-color .2s}
+.drop:hover,.drop.over{background:rgba(255,82,154,.12);border-color:var(--accent)}
+.drop strong{font:700 16px var(--title)}
+.drop span{color:var(--muted);font-size:13px}
+.up{margin-bottom:8px}
+.up .bar{height:6px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:6px}
+.up .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .15s}
+.up.err .sub{color:#ff7b92}
+.up.ok .sub{color:var(--green)}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <form id="loginForm" class="glass">
+    <img src="logo.svg" alt="">
+    <h1>FadeAway Admin</h1>
+    <p>Accès réservé à l'administrateur.</p>
+    <input id="srv" placeholder="Adresse du serveur (https://...)" autocomplete="off" spellcheck="false">
+    <input id="pw" type="password" placeholder="Mot de passe" autocomplete="current-password" autofocus>
+    <button>Se connecter</button>
+    <div id="err"></div>
+  </form>
+</div>
+
+<div class="wrap" id="dash" hidden>
+  <div class="top">
+    <div class="brand"><img src="logo.svg" alt=""><span>FadeAway</span><span class="tag">Admin</span></div>
+    <button id="logout" class="ghost small">Déconnexion</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat glass"><b id="stOnline">0</b><span>utilisateur(s) en ligne</span></div>
+    <div class="stat glass"><b id="stVersion">-</b><span>version publiée</span></div>
+    <div class="stat glass"><b id="stUptime">-</b><span>serveur actif depuis</span></div>
+  </div>
+
+  <section class="card glass">
+    <h2>Utilisateurs</h2>
+    <div id="users" class="list"></div>
+    <h3>Bannis</h3>
+    <div id="bans" class="list"></div>
+  </section>
+
+  <section class="card glass">
+    <h2>Mises à jour de l'app</h2>
+    <p class="hint">Dépose les 3 fichiers fabriqués par GitHub : <code>FadeAway-Setup-x.y.z.exe</code>, <code>latest.yml</code> et le <code>.blockmap</code>.
+      Les apps installées les récupèrent toutes seules.</p>
+    <label class="drop" id="drop">
+      <strong>Glisse les fichiers ici</strong>
+      <span>ou clique pour les choisir (.exe, .yml, .blockmap)</span>
+      <input type="file" id="file" multiple accept=".exe,.yml,.blockmap" hidden>
+    </label>
+    <div id="uploads"></div>
+    <h3>Fichiers publiés</h3>
+    <div id="files" class="list"></div>
+    <p class="hint" style="margin-top:16px">Lien de téléchargement à donner à tes amis : <code id="dlLink"></code></p>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let token = null, timer = null;
+try { token = sessionStorage.getItem('fa.token'); } catch {}
+// Sur GitHub Pages, la page n'est pas sur le serveur : on demande son adresse.
+const onPages = /\.github\.io$/.test(location.hostname) || location.protocol === 'file:';
+const normBase = v => { v = v.trim().replace(/\/+$/, ''); return v && !/^https?:\/\//i.test(v) ? 'http://' + v : v; };
+let base = '';
+try { base = localStorage.getItem('fa.base') || ''; } catch {}
+if (!onPages) base = location.origin;   // servie par le serveur lui-même
+$('#srv').value = base; $('#srv').hidden = !onPages;
+const save = t => { token = t; try { t ? sessionStorage.setItem('fa.token', t) : sessionStorage.removeItem('fa.token'); } catch {} };
+const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._ ()\-]{0,118}\.(exe|yml|blockmap)$/i;
+
+async function api(url, method = 'GET', body) {
+  const r = await fetch(base + url, {
+    method,
+    headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (r.status === 401) { logout(); throw new Error('Session expirée'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Erreur ' + r.status);
+  return j;
+}
+
+// ---------- affichage ----------
+function paint(el, name) {
+  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
+  el.textContent = name[0].toUpperCase();
+  el.style.background = `linear-gradient(135deg,hsl(${h} 85% 62%),hsl(${(h + 50) % 360} 85% 52%))`;
+}
+const ago = t => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 1 ? "à l'instant" : m < 60 ? `il y a ${m} min` : `il y a ${Math.round(m / 60)} h`; };
+const dur = ms => { const m = Math.floor(ms / 60000); return m < 60 ? m + ' min' : m < 1440 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : Math.floor(m / 1440) + ' j'; };
+const mo = b => (b / 1048576 >= 1 ? (b / 1048576).toFixed(1) + ' Mo' : Math.max(1, Math.round(b / 1024)) + ' Ko');
+
+function mkRow(name, sub, buttons) {
+  const d = document.createElement('div'); d.className = 'row';
+  const av = document.createElement('span'); av.className = 'avatar'; paint(av, name);
+  const g = document.createElement('div'); g.className = 'grow';
+  const n = document.createElement('div'); n.className = 'name'; n.textContent = name;
+  const s = document.createElement('div'); s.className = 'sub'; s.textContent = sub;
+  g.append(n, s);
+  const a = document.createElement('div'); a.className = 'actions';
+  buttons.forEach(([label, cls, fn]) => { const b = document.createElement('button'); b.className = 'small ' + cls; b.textContent = label; b.onclick = fn; a.append(b); });
+  d.append(av, g, a);
+  return d;
+}
+function fill(box, rows, emptyText) {
+  box.replaceChildren(...(rows.length ? rows : [Object.assign(document.createElement('div'), { className: 'empty', textContent: emptyText })]));
+}
+
+async function act(fn) { try { await fn(); await refresh(); } catch (e) { alert(e.message); } }
+
+function render(d) {
+  $('#stOnline').textContent = d.online.length;
+  $('#stUptime').textContent = dur(d.uptime);
+  fill($('#users'), d.online.map(u => mkRow(u.name, 'connecté ' + ago(u.since), [
+    ['Déconnecter', 'ghost', () => act(() => api('/api/admin/kick', 'POST', { name: u.name, minutes: 0 }))],
+    ['Exclure 10 min', 'ghost', () => act(() => api('/api/admin/kick', 'POST', { name: u.name, minutes: 10 }))],
+    ['Bannir', 'danger', () => confirm('Bannir ' + u.name + ' jusqu\'au redémarrage du serveur ?') && act(() => api('/api/admin/kick', 'POST', { name: u.name, minutes: null }))],
+  ])), 'Personne en ligne.');
+  fill($('#bans'), d.bans.map(b => mkRow(b.name, b.until ? 'jusqu\'à ' + new Date(b.until).toLocaleTimeString() : 'jusqu\'au redémarrage', [
+    ['Débannir', 'ghost', () => act(() => api('/api/admin/unban', 'POST', { name: b.name }))],
+  ])), 'Aucun banni.');
+}
+function renderFiles(u) {
+  $('#stVersion').textContent = u.version || '-';
+  fill($('#files'), u.files.map(f => mkRow(f.name, mo(f.size) + ' · ' + ago(f.mtime), [
+    ['Supprimer', 'danger', () => confirm('Supprimer ' + f.name + ' ?') && act(() => api('/api/admin/updates?name=' + encodeURIComponent(f.name), 'DELETE'))],
+  ])), 'Aucun fichier publié pour le moment.');
+}
+async function refresh() {
+  const [d, u] = await Promise.all([api('/api/admin/users'), api('/api/admin/updates')]);
+  render(d); renderFiles(u);
+}
+
+// ---------- envoi des mises à jour ----------
+function upload(file) {
+  return new Promise(resolve => {
+    const box = document.createElement('div'); box.className = 'row up';
+    const g = document.createElement('div'); g.className = 'grow';
+    const n = document.createElement('div'); n.className = 'name'; n.textContent = file.name;
+    const s = document.createElement('div'); s.className = 'sub'; s.textContent = 'envoi… ' + mo(file.size);
+    const bar = document.createElement('div'); bar.className = 'bar'; const fillBar = document.createElement('i'); bar.append(fillBar);
+    g.append(n, s, bar); box.append(g); $('#uploads').append(box);
+    const end = (cls, msg) => { box.classList.add(cls); s.textContent = msg; bar.remove(); resolve(); };
+
+    if (!NAME_RE.test(file.name)) return end('err', 'refusé : seuls .exe, .yml et .blockmap sont acceptés');
+    const x = new XMLHttpRequest();
+    x.open('PUT', base + '/api/admin/updates?name=' + encodeURIComponent(file.name));
+    x.setRequestHeader('Authorization', 'Bearer ' + token);
+    x.upload.onprogress = e => { if (e.lengthComputable) fillBar.style.width = (e.loaded / e.total * 100) + '%'; };
+    x.onload = () => {
+      if (x.status === 200) return end('ok', 'publié ✓');
+      let m = 'erreur ' + x.status; try { m = JSON.parse(x.responseText).error || m; } catch {}
+      if (x.status === 413 || x.status === 502) m += ' (derrière un tunnel Cloudflare la limite est ~100 Mo : mets http://localhost:3000 dans le champ serveur)';
+      end('err', m);
+    };
+    x.onerror = () => end('err', 'erreur réseau');
+    x.send(file);
+  });
+}
+async function uploadAll(fileList) {
+  // latest.yml en dernier : les apps ne voient la nouvelle version qu'une fois l'installeur complet
+  const files = [...fileList].sort((a, b) => (/\.yml$/i.test(a.name) ? 1 : 0) - (/\.yml$/i.test(b.name) ? 1 : 0));
+  $('#uploads').replaceChildren();
+  for (const f of files) await upload(f);
+  act(async () => {});
+}
+const drop = $('#drop');
+$('#file').onchange = e => { uploadAll(e.target.files); e.target.value = ''; };
+['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => uploadAll(e.dataTransfer.files));
+
+// ---------- session ----------
+function show() {
+  $('#login').hidden = true; $('#dash').hidden = false;
+  $('#dlLink').textContent = base + '/download';
+  refresh().catch(() => {});
+  clearInterval(timer); timer = setInterval(() => refresh().catch(() => {}), 4000);
+}
+function logout() {
+  save(null); clearInterval(timer);
+  $('#dash').hidden = true; $('#login').hidden = false;
+}
+$('#logout').onclick = logout;
+$('#loginForm').onsubmit = async e => {
+  e.preventDefault(); $('#err').textContent = '';
+  try {
+    base = normBase($('#srv').value);
+    if (!base) throw new Error("Indique l'adresse du serveur");
+    const r = await fetch(base + '/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('#pw').value }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'Erreur ' + r.status);
+    save(j.token); $('#pw').value = ''; try { localStorage.setItem('fa.base', base); } catch {} show();
+  } catch (err) { $('#err').textContent = err instanceof TypeError ? 'Serveur injoignable (bonne adresse ? serveur lancé ?)' : err.message; }
+};
+if (token && base) show();
+</script>
+</body>
+</html>

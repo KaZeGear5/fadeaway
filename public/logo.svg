@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <clipPath id="clip"><rect width="1024" height="1024" rx="232"/></clipPath>
+
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2d0f55"/>
+      <stop offset="0.28" stop-color="#8e1f78"/>
+      <stop offset="0.46" stop-color="#ff529a"/>
+      <stop offset="0.60" stop-color="#ff9e6b"/>
+      <stop offset="0.70" stop-color="#ffd400"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff2a0" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffd400" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff7a8"/>
+      <stop offset="1" stop-color="#ffc400"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a1763"/>
+      <stop offset="1" stop-color="#1c0733"/>
+    </linearGradient>
+
+    <!-- le soleil "s'efface" : des bandes de plus en plus épaisses -->
+    <mask id="fade" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <rect x="0" y="622" width="1024" height="9" fill="#000"/>
+      <rect x="0" y="648" width="1024" height="13" fill="#000"/>
+      <rect x="0" y="676" width="1024" height="18" fill="#000"/>
+      <rect x="0" y="708" width="1024" height="24" fill="#000"/>
+    </mask>
+
+    <path id="frond" d="M0 0 C 40 -62 130 -58 188 34 C 130 -14 52 -16 0 0 Z"/>
+
+    <g id="palm" fill="#220a3a">
+      <path d="M168 840 Q 214 610 258 392" stroke="#220a3a" stroke-width="26" stroke-linecap="round" fill="none"/>
+      <g transform="translate(258 392)">
+        <use href="#frond" transform="rotate(-78)"/>
+        <use href="#frond" transform="rotate(-40)"/>
+        <use href="#frond" transform="rotate(-4)"/>
+        <use href="#frond" transform="rotate(32)"/>
+        <use href="#frond" transform="scale(-1 1) rotate(-78)"/>
+        <use href="#frond" transform="scale(-1 1) rotate(-40)"/>
+        <use href="#frond" transform="scale(-1 1) rotate(-4)"/>
+        <use href="#frond" transform="scale(-1 1) rotate(32)"/>
+        <circle cx="-10" cy="20" r="13"/>
+        <circle cx="14" cy="24" r="13"/>
+      </g>
+    </g>
+  </defs>
+
+  <g clip-path="url(#clip)">
+    <rect width="1024" height="1024" fill="url(#sky)"/>
+
+    <!-- étoiles -->
+    <g fill="#fff" opacity="0.75">
+      <circle cx="150" cy="140" r="6"/><circle cx="330" cy="86" r="4"/><circle cx="700" cy="120" r="5"/>
+      <circle cx="870" cy="200" r="4"/><circle cx="530" cy="190" r="3"/><circle cx="90" cy="290" r="3"/>
+    </g>
+
+    <!-- soleil + mascotte -->
+    <circle cx="512" cy="540" r="290" fill="url(#halo)"/>
+    <circle cx="512" cy="540" r="190" fill="url(#sun)" mask="url(#fade)"/>
+    <g>
+      <g fill="#220a3a">
+        <rect x="418" y="462" width="84" height="58" rx="22"/>
+        <rect x="522" y="462" width="84" height="58" rx="22"/>
+        <rect x="498" y="476" width="28" height="12" rx="6"/>
+      </g>
+      <path d="M432 480 L458 480" stroke="#fff" stroke-opacity="0.45" stroke-width="8" stroke-linecap="round"/>
+      <path d="M536 480 L562 480" stroke="#fff" stroke-opacity="0.45" stroke-width="8" stroke-linecap="round"/>
+      <path d="M468 566 Q512 606 556 566" stroke="#220a3a" stroke-width="13" fill="none" stroke-linecap="round"/>
+      <circle cx="440" cy="562" r="17" fill="#ff529a" opacity="0.5"/>
+      <circle cx="584" cy="562" r="17" fill="#ff529a" opacity="0.5"/>
+    </g>
+
+    <!-- mer + reflets -->
+    <rect x="0" y="720" width="1024" height="304" fill="url(#sea)"/>
+    <g fill="#ffd400">
+      <rect x="402" y="742" width="220" height="14" rx="7" opacity="0.85"/>
+      <rect x="432" y="776" width="160" height="14" rx="7" opacity="0.6"/>
+      <rect x="462" y="810" width="100" height="14" rx="7" opacity="0.4"/>
+      <rect x="486" y="844" width="52" height="14" rx="7" opacity="0.25"/>
+    </g>
+
+    <!-- îlots + palmiers -->
+    <ellipse cx="150" cy="862" rx="250" ry="56" fill="#220a3a"/>
+    <ellipse cx="930" cy="772" rx="200" ry="44" fill="#220a3a"/>
+    <use href="#palm"/>
+    <use href="#palm" transform="translate(1050 70) scale(-0.8 0.8)"/>
+  </g>
+</svg>
