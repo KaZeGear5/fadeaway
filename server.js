@@ -150,6 +150,23 @@ function latestInfo() {
   } catch { return { version: null, installer: null }; }
 }
 
+// Garde-fou : latest.yml n'est accepté que si l'installeur qu'il annonce est déjà publié,
+// sinon toutes les apps essaieraient de télécharger un fichier qui n'existe pas.
+function checkUpload(name, tmpFile) {
+  if (!/^latest\.yml$/i.test(name)) return null;
+  let txt;
+  try {
+    if (fs.statSync(tmpFile).size > 100000) return "Ce latest.yml est trop gros : ce n'est pas le bon fichier";
+    txt = fs.readFileSync(tmpFile, 'utf8');
+  } catch { return 'Lecture de latest.yml impossible'; }
+  const v = /^version:\s*['"]?(\d+\.\d+\.\d+[^\s'"]*)/m.exec(txt);
+  const p = /^path:\s*['"]?(.+?)['"]?\s*$/m.exec(txt);
+  if (!v || !p) return 'latest.yml invalide (version ou path introuvable)';
+  if (!safeName(p[1]) || !p[1].toLowerCase().endsWith('.exe')) return `latest.yml pointe vers « ${p[1]} », ce n'est pas un installeur valide`;
+  if (!fs.existsSync(path.join(UPDATES, p[1]))) return `latest.yml annonce ${p[1]} qui n'est pas encore publié : dépose d'abord l'installeur (.exe)`;
+  return null;
+}
+
 function handleUpload(req, res, name) {
   if (!safeName(name)) return json(res, 400, { error: 'Nom de fichier refusé (seuls .exe, .yml et .blockmap sont acceptés)' });
   if (Number(req.headers['content-length'] || 0) > MAX_UPLOAD) return json(res, 413, { error: 'Fichier trop gros' });
@@ -171,6 +188,8 @@ function handleUpload(req, res, name) {
   ws.on('finish', () => {
     if (done) return;
     done = true;
+    const problem = checkUpload(name, tmp);
+    if (problem) { cleanup(); return json(res, 400, { error: problem }); }
     fs.rename(tmp, path.join(UPDATES, name), err => {
       if (err) { cleanup(); return json(res, 500, { error: 'Renommage impossible' }); }
       console.log(`Mise à jour déposée : ${name} (${(size / 1048576).toFixed(1)} Mo)`);
@@ -341,7 +360,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.requestTimeout = 0; // les gros envois (installeur ~80 Mo) ne doivent pas être coupés
-server.listen(PORT, () => {
+server.listen(PORT, process.env.HOST || '0.0.0.0', () => {
   console.log(`FadeAway sur http://localhost:${PORT}`);
   console.log(`Admin       http://localhost:${PORT}/admin`);
 });

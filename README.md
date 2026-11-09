@@ -91,6 +91,52 @@ Dans le panneau admin, **glisse les 3 fichiers** dans « Mises à jour ». Donne
 Les apps vérifient à l'ouverture puis toutes les 30 min, téléchargent, et proposent de redémarrer.
 **Augmente toujours le numéro de version.** Les changements de `server.js` demandent de relancer le serveur.
 
+
+## Raccourcis (Linux)
+
+- `./start.sh` : lance le serveur + le tunnel en une commande (mot de passe admin retenu dans `~/.config/fadeaway`).
+- `./release.sh 0.1.1 "message"` : envoie le code, attend le build GitHub, dépose les fichiers dans le serveur.
+- Dans le panneau admin, le bouton **❓ Comment déployer ?** (à côté de « Mises à jour ») donne les commandes
+  à copier avec le prochain numéro de version, la liste des erreurs à éviter, et une **vérification** verte / orange / rouge
+  de ce qui est publié.
+- Le serveur refuse tout seul un `latest.yml` dont l'installeur n'est pas encore publié (c'est la bêtise la plus courante).
+
+## Héberger sur la Raspberry Pi (adresse fixe + HTTPS)
+
+Le serveur ne fait passer que du texte et la mise en relation des appels (l'audio et la vidéo vont directement d'un
+utilisateur à l'autre) : ~45 Mo de mémoire, presque aucun processeur. Le service est limité (priorité basse,
+250 à 400 Mo max) pour ne jamais gêner les serveurs Minecraft.
+
+**Sur ton PC** : `git add . && git commit -m "pi" && git push` (le dossier à jour doit être sur GitHub).
+
+**Sur la Pi** (en SSH), une seule fois :
+
+```
+sudo apt install -y git
+git clone https://github.com/KaZeGear5/fadeaway.git
+cd fadeaway
+sudo ./deploy/install-pi.sh
+```
+
+Le script installe Node, enregistre le mot de passe admin, crée le service (il démarre avec la Pi) et **ajoute un bloc**
+à `/etc/caddy/Caddyfile` (sauvegarde + vérification avant rechargement, ton Caddyfile existant n'est pas modifié).
+Prérequis : `fadeaway.kazegear5.duckdns.org` pointe vers ton IP (les sous-domaines DuckDNS suivent le domaine principal)
+et les ports 80/443 arrivent sur la Pi.
+
+**Mettre à jour le serveur plus tard** (sur la Pi) : `./deploy/update-pi.sh` (redémarre le serveur : MP effacés).
+**Logs** : `sudo journalctl -u fadeaway -f`. **Redémarrer** : `sudo systemctl restart fadeaway`.
+
+**Sur ton PC, pour `fa-release`** (il doit déposer les fichiers sur la Pi, pas en local) :
+
+```
+mkdir -p ~/.config/fadeaway
+printf '%s' "https://fadeaway.kazegear5.duckdns.org" > ~/.config/fadeaway/server
+printf '%s' "LE_MOT_DE_PASSE_ADMIN_DE_LA_PI" > ~/.config/fadeaway/admin-password
+```
+
+Plus de limite de 100 Mo (c'était celle du tunnel Cloudflare) : l'installeur passe sans souci.
+Le domaine est déjà celui proposé par défaut dans l'app et dans le panneau admin.
+
 ---
 
 ## À savoir
