@@ -1,159 +1,71 @@
 # FadeAway
 
-Messages privés + appels vocaux / caméra / partage d'écran en **P2P (WebRTC)**.
-App Windows (`.exe`) avec mises à jour automatiques et **panneau admin hébergé sur GitHub Pages**.
+Messagerie façon Discord, **100 % web** : comptes, messages privés, serveur, appels voix / caméra / écran en P2P.
+Aucune installation obligatoire : on ouvre le site, et on peut **l'ajouter à l'écran d'accueil** (téléphone et PC) comme une vraie app.
 
-## Comment ça s'organise
-
-| Morceau | Où | Rôle |
+| Quoi | Où | Rôle |
 |---|---|---|
-| **Panneau admin** (`admin/`) | GitHub Pages : `https://TON_PSEUDO.github.io/fadeaway/` | l'interface : utilisateurs, exclusions, dépôt des mises à jour |
-| **Serveur** (`server.js`) | ton PC (+ tunnel) ou un petit serveur | MP, appels, et c'est lui qui **distribue les mises à jour** |
-| **App** (.exe) | PC de chaque utilisateur | se met à jour toute seule depuis ton serveur |
-| **Code + build** | dépôt GitHub | GitHub fabrique l'.exe |
+| **Le site** | ta Raspberry Pi, `https://fadeaway.kazegear5.duckdns.org` | l'app + les comptes + les messages |
+| **Panneau admin** | `/admin` sur ta Pi, ou GitHub Pages (`https://kazegear5.github.io/fadeaway/`) | modération + console |
+| **Code** | dépôt GitHub `KaZeGear5/fadeaway` | Pages publie `admin/` tout seul |
 
-Le panneau sur GitHub Pages n'est qu'une **page** : il ne stocke rien et ne contient aucun secret.
-Il parle à ton serveur avec ton mot de passe admin. **Il faut donc que le serveur tourne** pour l'utiliser.
+Il n'y a plus de `.exe` ni de mises à jour à distribuer : quand tu mets à jour la Pi, tout le monde a la nouvelle version au prochain chargement.
 
-> GitHub Pages gratuit demande un dépôt **public** (le code est visible, mais jamais le mot de passe :
-> il n'est que dans ta variable `ADMIN_PASSWORD`). Pages sur dépôt privé = abonnement payant.
+## Utiliser l'app
 
-## Étape 0 : outils (une fois)
+1. Ouvre le site, **Créer un compte** (e-mail, pseudo, sous-pseudo, mot de passe), puis entre le code reçu par e-mail.
+2. Propose-toi en ami avec un **@sous-pseudo** (zone « Ajouter » à gauche), puis discute ou appelle.
+3. **Installer** : sur PC (Chrome/Edge) bouton « 📲 Installer FadeAway » en bas de la liste ou icône d'installation dans la barre d'adresse ;
+   sur Android (Chrome) idem ; sur iPhone (Safari) : Partager → *Sur l'écran d'accueil*.
+4. Les appels demandent **HTTPS** (c'est le cas sur ton domaine) pour accéder au micro et à la caméra.
 
-Node.js LTS (https://nodejs.org), Git (https://git-scm.com/download/win), un compte GitHub.
+### Son et voix (🎧 à côté de ton profil, ou « Audio » pendant un appel)
+Micro et haut-parleur au choix · **isolation de la voix** (Aucune / Standard / Forte : réduction de bruit du navigateur + filtre qui coupe ce qui n'est pas ta voix, sensibilité réglable) ·
+annulation d'écho · volume automatique · qualité du son (32 / 64 / 128 kb/s) · volume des autres · **test du micro** avec jauge.
+Pendant un appel, une ligne d'état dit si **ton micro envoie** et si **tu reçois sa voix** ; une bordure verte entoure celui qui parle.
+Si le navigateur bloque la lecture, un bouton « Appuie ici pour activer le son » apparaît.
 
-## Étape 1 : mettre le code sur GitHub
+## Comptes, e-mails, OP et Premium
 
-1. https://github.com/new : nom `fadeaway`, **Public**, rien d'autre de coché.
-2. Dans PowerShell, dans le dossier du projet :
+**E-mails** (sur la Pi, une seule fois) : `cd ~/fadeaway && ./deploy/setup-mail.sh` (Gmail avec mot de passe d'application, ou Brevo). Les réglages vont dans `/etc/fadeaway.env` (root seulement).
+Tant que ce n'est pas fait, les codes s'affichent dans `sudo journalctl -u fadeaway -f`, et la commande `verify #n` de la console admin valide un compte à la main.
 
-```
-git config --global user.name "KaZeGear5"
-git config --global user.email "ton-email"
-git init
-git add .
-git commit -m "Premier commit"
-git branch -M main
-git remote add origin https://github.com/KaZeGear5/fadeaway.git
-git push -u origin main
-```
+**Te donner OP** : crée ton compte (le premier est `#1`), puis dans la console du panneau admin : `op #1`. Dans l'app, 🛠️ ou la touche F2 ouvre la console OP.
+Un OP peut modérer et donner le Premium, mais pas `op` / `deop` / `verify`, et ne peut pas sanctionner un autre OP.
 
-## Étape 2 : activer le panneau admin
+| Commande (`<user>` = `#3`, `@sous-pseudo`) | Effet |
+|---|---|
+| `kick <user> [raison]` | expulse |
+| `tempban <user> <durée> [raison]` · `ban <user> [raison]` · `unban <user>` | bannissement |
+| `tempmute <user> <durée> [raison]` · `mute <user> [raison]` · `unmute <user>` | mute (texte) |
+| `premium give <user> [durée]` · `premium take <user>` · `premium list` | FadeAway Premium |
+| `op`, `deop`, `ops`, `verify`, `say <message>`, `list`, `whois <user>`, `help` | divers |
 
-1. Sur GitHub : dépôt → **Settings → Pages → Source : GitHub Actions**.
-2. Onglet **Actions** → *Admin (GitHub Pages)* → **Run workflow**.
-3. Après une minute, le panneau est sur `https://kazegear5.github.io/fadeaway/`.
+Durées : `30m`, `2h`, `7d`, `1w`. **Premium ✦** : badge, nom en dégradé animé, aura autour de la photo, avatar GIF animé, messages de 4000 caractères.
 
-## Étape 3 : lancer le serveur
+## Mettre en ligne sur la Raspberry Pi
 
-```
-$env:ADMIN_PASSWORD="un-mot-de-passe-solide"
-node server.js
-```
+**Sur ton PC** : `git add . && git commit -m "message" && git push`.
 
-Dans un 2e terminal, pour l'ouvrir sur Internet (tes amis + le panneau admin) :
-
-```
-cloudflared tunnel --url http://localhost:3000
-```
-
-Il affiche `https://xxxx.trycloudflare.com` : **l'adresse du serveur**. Elle change à chaque lancement.
-
-## Étape 4 : ouvrir le panneau admin
-
-Va sur `https://kazegear5.github.io/fadeaway/`, entre **l'adresse du serveur** (celle du tunnel) et ton **mot de passe**.
-Tu peux aussi ouvrir `http://localhost:3000/admin` sur le PC qui héberge le serveur : c'est le même panneau.
-
-## Étape 5 : fabriquer l'.exe
-
-```
-npm install
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-Onglet **Actions** → *Build FadeAway (.exe)* (5-10 min) → ouvre l'exécution → **Artifacts** → télécharge
-`fadeaway-update` → dézippe : 3 fichiers (`FadeAway-Setup-0.1.0.exe`, `latest.yml`, `.blockmap`).
-
-## Étape 6 : publier la version
-
-Dans le panneau admin, **glisse les 3 fichiers** dans « Mises à jour ». Donne à tes amis :
-`https://adresse-du-serveur/download`.
-
-> Le tunnel Cloudflare limite les envois à ~100 Mo (l'installeur est juste en dessous).
-> Si le dépôt est refusé : dans le champ serveur du panneau, mets `http://localhost:3000`
-> (le navigateur peut demander l'autorisation d'accéder au réseau local : accepte).
-
-## Étape 7 : mettre à jour plus tard
-
-`git add .` → `git commit -m "..."` → `git push` → `git tag v0.1.1` → `git push origin v0.1.1`
-→ télécharge l'artefact → dépose les 3 fichiers dans le panneau.
-Les apps vérifient à l'ouverture puis toutes les 30 min, téléchargent, et proposent de redémarrer.
-**Augmente toujours le numéro de version.** Les changements de `server.js` demandent de relancer le serveur.
-
-
-## Raccourcis (Linux)
-
-- `./start.sh` : lance le serveur + le tunnel en une commande (mot de passe admin retenu dans `~/.config/fadeaway`).
-- `./release.sh 0.1.1 "message"` : envoie le code, attend le build GitHub, dépose les fichiers dans le serveur.
-- Dans le panneau admin, le bouton **❓ Comment déployer ?** (à côté de « Mises à jour ») donne les commandes
-  à copier avec le prochain numéro de version, la liste des erreurs à éviter, et une **vérification** verte / orange / rouge
-  de ce qui est publié.
-- Le serveur refuse tout seul un `latest.yml` dont l'installeur n'est pas encore publié (c'est la bêtise la plus courante).
-
-## Héberger sur la Raspberry Pi (adresse fixe + HTTPS)
-
-Le serveur ne fait passer que du texte et la mise en relation des appels (l'audio et la vidéo vont directement d'un
-utilisateur à l'autre) : ~45 Mo de mémoire, presque aucun processeur. Le service est limité (priorité basse,
-250 à 400 Mo max) pour ne jamais gêner les serveurs Minecraft.
-
-**Sur ton PC** : `git add . && git commit -m "pi" && git push` (le dossier à jour doit être sur GitHub).
-
-**Sur la Pi** (en SSH), une seule fois :
-
+**Sur la Pi**, une seule fois :
 ```
 sudo apt install -y git
 git clone https://github.com/KaZeGear5/fadeaway.git
 cd fadeaway
 sudo ./deploy/install-pi.sh
+./deploy/setup-mail.sh
 ```
+Le script installe Node, enregistre le mot de passe admin, crée le service (priorité basse : les serveurs Minecraft ne sont pas gênés) et ajoute un bloc à
+`/etc/caddy/Caddyfile` (sauvegarde + vérification, ton Caddyfile existant n'est pas modifié). Prérequis : le domaine DuckDNS pointe vers ta box et les ports 80/443 arrivent sur la Pi.
 
-Le script installe Node, enregistre le mot de passe admin, crée le service (il démarre avec la Pi) et **ajoute un bloc**
-à `/etc/caddy/Caddyfile` (sauvegarde + vérification avant rechargement, ton Caddyfile existant n'est pas modifié).
-Prérequis : `fadeaway.kazegear5.duckdns.org` pointe vers ton IP (les sous-domaines DuckDNS suivent le domaine principal)
-et les ports 80/443 arrivent sur la Pi.
+**Mettre à jour plus tard** : `cd ~/fadeaway && ./deploy/update-pi.sh`. **Logs** : `sudo journalctl -u fadeaway -f`.
 
-**Mettre à jour le serveur plus tard** (sur la Pi) : `./deploy/update-pi.sh` (redémarre le serveur : MP effacés).
-**Logs** : `sudo journalctl -u fadeaway -f`. **Redémarrer** : `sudo systemctl restart fadeaway`.
-
-**Sur ton PC, pour `fa-release`** (il doit déposer les fichiers sur la Pi, pas en local) :
-
-```
-mkdir -p ~/.config/fadeaway
-printf '%s' "https://fadeaway.kazegear5.duckdns.org" > ~/.config/fadeaway/server
-printf '%s' "LE_MOT_DE_PASSE_ADMIN_DE_LA_PI" > ~/.config/fadeaway/admin-password
-```
-
-Plus de limite de 100 Mo (c'était celle du tunnel Cloudflare) : l'installeur passe sans souci.
-Le domaine est déjà celui proposé par défaut dans l'app et dans le panneau admin.
-
----
-
-## À savoir
-
-- **Mot de passe admin solide** : le panneau et le serveur sont joignables par quiconque connaît leurs adresses.
-  5 mauvais essais = blocage 10 min ; session de 12 h.
-- Les mises à jour sont du code exécuté chez tes amis : ils ne doivent se connecter qu'à **ton** serveur.
-- SmartScreen : « Windows a protégé votre PC » à l'installation (exe non signé) → *Informations complémentaires → Exécuter quand même*.
-- Tout est en mémoire côté serveur (MP, bannissements) ; les fichiers de mise à jour restent dans `data/`.
-- Appels à deux seulement ; 4G / réseaux d'entreprise peuvent demander un serveur TURN.
+## Si on ne s'entend pas en appel
+1. Regarde la ligne d'état de l'appel : « ton micro n'envoie rien » → mauvais micro (ouvre 🎧 Audio, choisis-le, jauge de test) ; « aucun son reçu » → c'est l'autre côté ou le réseau.
+2. « Impossible de relier vos deux appareils » = réseaux trop restrictifs (4G, entreprise). Il faut alors un **serveur TURN** : installe `coturn`, ouvre le port 3478 (UDP/TCP) et sa plage de relais,
+   puis ajoute dans `/etc/fadeaway.env` : `TURN_URL=turn:fadeaway.kazegear5.duckdns.org:3478` et `TURN_SECRET=<le static-auth-secret de coturn>` ; redémarre le service. L'app le prend automatiquement.
 
 ## Dépannage
-
-| Symptôme | Cause probable |
-|---|---|
-| Panneau : « Serveur injoignable » | serveur ou tunnel éteint, ou adresse du tunnel qui a changé |
-| Panneau : « Mot de passe incorrect » | mauvais `ADMIN_PASSWORD` (sans variable, un mot de passe temporaire s'affiche dans le terminal) |
-| Pages : 404 | Pages pas activé (Settings → Pages → GitHub Actions), puis relancer le workflow |
-| Pas de mise à jour reçue | version non augmentée, `latest.yml` pas déposé, ou app lancée avec `npm start` |
-| Dépôt refusé (413 / 502) | installeur > ~100 Mo derrière le tunnel : voir l'étape 6 |
+- Page blanche après une mise à jour : recharge avec Ctrl+Maj+R (le service worker prend la nouvelle version tout seul ensuite).
+- Pas de mail de code : `sudo journalctl -u fadeaway -n 30`, ou `verify #n` dans la console admin.
+- Admin : mot de passe dans `/etc/fadeaway.env` (`ADMIN_PASSWORD`) ; 5 essais ratés = blocage 10 min.

@@ -2,7 +2,14 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14091f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FadeAway">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>FadeAway</title>
 <link rel="icon" type="image/svg+xml" href="logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,33 +19,79 @@
 </head>
 <body>
 
-<div id="login">
-  <form id="loginForm">
+<!-- ============ connexion / inscription ============ -->
+<div id="auth" class="screen" hidden>
+  <form id="authForm" class="glass authcard" autocomplete="on">
     <img class="logo" src="logo.svg" alt="">
     <h1>FadeAway</h1>
     <p class="sub">Messages, voix, caméra et écran, en direct.</p>
-    <label>Pseudo
-      <input id="nameInput" maxlength="20" placeholder="Ton pseudo" autofocus autocomplete="off">
+
+    <div class="tabs">
+      <button type="button" class="tab on" data-mode="login">Connexion</button>
+      <button type="button" class="tab" data-mode="register">Créer un compte</button>
+    </div>
+
+    <label class="f-login">E-mail ou @sous-pseudo
+      <input id="fLogin" autocomplete="username" spellcheck="false">
     </label>
-    <label>Serveur
-      <input id="serverInput" placeholder="http://localhost:3000" autocomplete="off" spellcheck="false">
+    <label class="f-reg">Adresse e-mail
+      <input id="fEmail" type="email" autocomplete="email" spellcheck="false">
     </label>
-    <button id="loginBtn">Entrer</button>
-    <div id="loginErr"></div>
+    <label class="f-reg">Pseudo <small>le nom qui s'affiche</small>
+      <input id="fName" maxlength="32" autocomplete="nickname">
+    </label>
+    <label class="f-reg">Sous-pseudo <small>unique, sert à t'ajouter en ami</small>
+      <input id="fUser" maxlength="20" autocomplete="off" spellcheck="false" placeholder="ex : kaze_42">
+    </label>
+    <label>Mot de passe
+      <input id="fPass" type="password" autocomplete="current-password">
+    </label>
+    <label class="f-reg">Confirmer le mot de passe
+      <input id="fPass2" type="password" autocomplete="new-password">
+    </label>
+
+    <details class="adv">
+      <summary>Serveur</summary>
+      <input id="fServer" placeholder="https://..." autocomplete="off" spellcheck="false">
+    </details>
+
+    <div id="authErr" class="err"></div>
+    <button id="authBtn" class="primary">Se connecter</button>
   </form>
 </div>
 
+<!-- ============ validation de l'e-mail ============ -->
+<div id="verify" class="screen" hidden>
+  <form id="verifyForm" class="glass authcard">
+    <img class="logo" src="logo.svg" alt="">
+    <h1>Vérifie ton e-mail</h1>
+    <p class="sub" id="verifyText"></p>
+    <input id="vCode" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000">
+    <div id="verifyNote" class="note"></div>
+    <div id="verifyErr" class="err"></div>
+    <button id="verifyBtn" class="primary">Valider</button>
+    <div class="row2">
+      <button type="button" id="resendBtn" class="ghost small">Renvoyer le code</button>
+      <button type="button" id="verifyOut" class="ghost small">Se déconnecter</button>
+    </div>
+  </form>
+</div>
+
+<!-- ============ l'application ============ -->
 <div id="app" hidden>
   <aside>
-    <div class="side-title">Messages privés</div>
-    <div id="userList"></div>
-    <div class="me"><span class="avatar" id="meAvatar"></span><span id="meName"></span></div>
+    <div id="meCard"></div>
+    <div id="nav"></div>
   </aside>
 
   <main>
     <header>
-      <span id="chatTitle">Sélectionne quelqu'un</span>
-      <button id="callBtn" class="call-btn" hidden>📞 Appeler</button>
+      <button id="backBtn" class="ghost small" aria-label="Retour">←</button>
+      <div id="chatTitle" class="ctitle">Sélectionne quelqu'un</div>
+      <div class="hbtns">
+        <button id="membersBtn" class="ghost small" hidden>👥 Membres</button>
+        <button id="callBtn" class="call-btn" hidden>📞 Appeler</button>
+      </div>
     </header>
 
     <div id="incoming" hidden>
@@ -49,20 +102,39 @@
 
     <section id="call" hidden>
       <div id="tiles"></div>
+      <div id="callStatus"></div>
+      <button id="audioFix" class="call-btn" hidden>🔊 Appuie ici pour activer le son</button>
       <div id="controls">
         <button id="muteBtn">🎤 Micro</button>
+        <button id="audioBtn" class="off">🎧 Audio</button>
         <button id="camBtn">📷 Caméra</button>
         <button id="screenBtn">🖥️ Partager l'écran</button>
         <button id="hangBtn" class="danger">Raccrocher</button>
       </div>
     </section>
 
-    <div id="messages"></div>
-    <form id="msgForm">
-      <input id="msgInput" placeholder="Écrire un message…" autocomplete="off" disabled>
-    </form>
+    <div class="body">
+      <div id="chat">
+        <div id="messages"></div>
+        <div id="muteNote" hidden></div>
+        <form id="msgForm">
+          <textarea id="msgInput" rows="1" placeholder="Écrire un message…" disabled></textarea>
+        </form>
+      </div>
+      <div id="members" hidden></div>
+    </div>
   </main>
 </div>
+
+<div id="consoleBox" class="console" hidden>
+  <div class="chead"><b>🛠️ Console OP</b><span class="hint">F2 pour ouvrir / fermer</span><button id="consoleClose" class="ghost small">✕</button></div>
+  <div id="consoleOut"></div>
+  <form id="consoleForm"><span>&gt;</span><input id="consoleIn" autocomplete="off" spellcheck="false" placeholder="help"></form>
+</div>
+
+<div id="audios" hidden></div>
+<div id="modals"></div>
+<div id="toasts"></div>
 
 <script src="config.js"></script>
 <script src="app.js"></script>

@@ -2,7 +2,7 @@
 # Met à jour le SERVEUR sur la Pi après un `git push` depuis ton PC :
 #   ./deploy/update-pi.sh
 # (les apps Windows, elles, se mettent à jour via le panneau admin)
-# Attention : redémarrer le serveur déconnecte les gens et efface les MP en cours.
+# Redémarrer le serveur déconnecte les gens quelques secondes (comptes et messages sont conservés).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 git pull --ff-only

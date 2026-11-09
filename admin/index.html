@@ -105,6 +105,16 @@ code{background:rgba(255,255,255,.09);padding:2px 7px;border-radius:6px;font-siz
 .check li.ok::before{content:"✓";color:var(--green)}
 .check li.warn::before{content:"⚠";color:var(--accent2)}
 .check li.bad::before{content:"✗";color:var(--red)}
+
+.badges{display:inline-flex;gap:5px;margin-left:8px;vertical-align:middle;flex-wrap:wrap}
+.bdg{font:700 10px var(--font);letter-spacing:.06em;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.12);color:#fff}
+.bdg.op{background:rgba(46,229,157,.2);color:var(--green)}.bdg.prem{background:rgba(255,212,0,.2);color:var(--accent2)}
+.bdg.bad{background:rgba(255,77,109,.22);color:#ff8fa3}.bdg.on{background:rgba(46,229,157,.2);color:var(--green)}
+.cout{max-height:260px;overflow:auto;background:rgba(0,0,0,.4);border-radius:12px;padding:10px 12px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;margin-bottom:10px}
+.cout .in{color:var(--accent2)}.cout .bad{color:#ff7b92}.cout:empty{display:none}
+.cform{display:flex;align-items:center;gap:10px}
+.cform span{font-family:ui-monospace,monospace;color:var(--muted)}
+.row .actions button{padding:5px 10px;font-size:12px}
 </style>
 </head>
 <body>
@@ -129,65 +139,24 @@ code{background:rgba(255,255,255,.09);padding:2px 7px;border-radius:6px;font-siz
 
   <div class="stats">
     <div class="stat glass"><b id="stOnline">0</b><span>utilisateur(s) en ligne</span></div>
-    <div class="stat glass"><b id="stVersion">-</b><span>version publiée</span></div>
+    <div class="stat glass"><b id="stCount">0</b><span>compte(s)</span></div>
     <div class="stat glass"><b id="stUptime">-</b><span>serveur actif depuis</span></div>
   </div>
 
+  <div id="mailWarn" class="check warn" hidden><div class="chead">E-mails non configurés</div>Les codes de vérification sont écrits dans le journal du serveur (<code>journalctl -u fadeaway -f</code>). Configure le SMTP (voir README) ou valide un compte avec la commande <code>verify #id</code> dans la console ci-dessous.</div>
+
   <section class="card glass">
-    <h2>Utilisateurs</h2>
+    <div class="cardhead"><h2>Comptes</h2><input id="q" placeholder="Rechercher (nom, @sous-pseudo, #n°, e-mail)" style="max-width:340px"></div>
     <div id="users" class="list"></div>
-    <h3>Bannis</h3>
-    <div id="bans" class="list"></div>
   </section>
 
   <section class="card glass">
-    <div class="cardhead">
-          <h2>Mises à jour de l'app</h2>
-          <button id="helpBtn" class="ghost small" type="button">❓ Comment déployer ?</button>
-        </div>
-        <div id="help" class="help" hidden>
-          <h4>Déployer une mise à jour sans se tromper</h4>
-          <p class="hint">Version publiée en ce moment : <b id="curVer">aucune</b> · prochaine conseillée : <b class="nextVer">0.1.0</b>.
-            Le numéro doit toujours être <b>plus grand</b> que celui déjà publié, sinon les apps ne se mettent pas à jour.</p>
-    
-          <h5>Méthode rapide (depuis le terminal, serveur lancé)</h5>
-          <div class="tpl"><pre id="tplRelease"></pre><button type="button" class="ghost small" data-copy="tplRelease">Copier</button></div>
-          <p class="hint">Il fait tout : envoi du code, construction de l'exe par GitHub, dépôt des fichiers ici.</p>
-    
-          <h5>Méthode manuelle (depuis ce site)</h5>
-          <ol>
-            <li>Dans le terminal, dans le dossier du projet :
-              <div class="tpl"><pre id="tplManual"></pre><button type="button" class="ghost small" data-copy="tplManual">Copier</button></div>
-            </li>
-            <li>Sur GitHub, onglet <b>Actions</b> : attends que « Build FadeAway (.exe) » soit vert (5 à 10 minutes).</li>
-            <li>Ouvre cette exécution, télécharge l'artefact <b>fadeaway-update</b> et dézippe-le : tu obtiens 3 fichiers.</li>
-            <li>Glisse les <b>3 fichiers en même temps</b> dans la zone ci-dessous (l'ordre d'envoi est géré tout seul).</li>
-            <li>Contrôle que la « Vérification » ci-dessous est <b>verte</b>.</li>
-          </ol>
-    
-          <h5>À ne pas faire</h5>
-          <ul class="avoid">
-            <li>Réutiliser un numéro de version déjà publié.</li>
-            <li>Déposer seulement une partie des fichiers, ou en renommer un.</li>
-            <li>Supprimer <code>latest.yml</code> : les apps ne verraient plus aucune mise à jour.</li>
-            <li>Compter sur un retour en arrière : une app déjà mise à jour ne revient pas à l'ancienne version. Corrige, puis publie un numéro plus grand.</li>
-          </ul>
-          <p class="hint">Les apps cherchent une mise à jour à l'ouverture, puis toutes les 30 minutes.</p>
-        </div>
-    <p class="hint">Dépose les 3 fichiers fabriqués par GitHub : <code>FadeAway-Setup-x.y.z.exe</code>, <code>latest.yml</code> et le <code>.blockmap</code>.
-      Les apps installées les récupèrent toutes seules.</p>
-    <label class="drop" id="drop">
-      <strong>Glisse les fichiers ici</strong>
-      <span>ou clique pour les choisir (.exe, .yml, .blockmap)</span>
-      <input type="file" id="file" multiple accept=".exe,.yml,.blockmap" hidden>
-    </label>
-    <div id="uploads"></div>
-    <h3>Vérification</h3>
-    <div id="check" class="check warn"></div>
-    <h3>Fichiers publiés</h3>
-    <div id="files" class="list"></div>
-    <p class="hint" style="margin-top:16px">Lien de téléchargement à donner à tes amis : <code id="dlLink"></code></p>
+    <h2>Console</h2>
+    <p class="hint">Mêmes commandes que dans l'app, plus <code>op</code>, <code>deop</code> et <code>verify</code>. Exemples : <code>op #1</code> · <code>premium give #2 30d</code> · <code>say Maintenance dans 5 min</code>. Tape <code>help</code> pour tout voir.</p>
+    <div id="cout" class="cout"></div>
+    <form id="cform" class="cform"><span>&gt;</span><input id="cin" autocomplete="off" spellcheck="false" placeholder="help"></form>
   </section>
+
 </div>
 
 <script>
@@ -203,7 +172,6 @@ if (!base) base = 'https://fadeaway.kazegear5.duckdns.org';
 if (!onPages) base = location.origin;   // servie par le serveur lui-même
 $('#srv').value = base; $('#srv').hidden = !onPages;
 const save = t => { token = t; try { t ? sessionStorage.setItem('fa.token', t) : sessionStorage.removeItem('fa.token'); } catch {} };
-const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._ ()\-]{0,118}\.(exe|yml|blockmap)$/i;
 
 async function api(url, method = 'GET', body) {
   const r = await fetch(base + url, {
@@ -245,127 +213,60 @@ function fill(box, rows, emptyText) {
 
 async function act(fn) { try { await fn(); await refresh(); } catch (e) { alert(e.message); } }
 
-function render(d) {
-  $('#stOnline').textContent = d.online.length;
-  $('#stUptime').textContent = dur(d.uptime);
-  fill($('#users'), d.online.map(u => mkRow(u.name, 'connecté ' + ago(u.since), [
-    ['Déconnecter', 'ghost', () => act(() => api('/api/admin/kick', 'POST', { name: u.name, minutes: 0 }))],
-    ['Exclure 10 min', 'ghost', () => act(() => api('/api/admin/kick', 'POST', { name: u.name, minutes: 10 }))],
-    ['Bannir', 'danger', () => confirm('Bannir ' + u.name + ' jusqu\'au redémarrage du serveur ?') && act(() => api('/api/admin/kick', 'POST', { name: u.name, minutes: null }))],
-  ])), 'Personne en ligne.');
-  fill($('#bans'), d.bans.map(b => mkRow(b.name, b.until ? 'jusqu\'à ' + new Date(b.until).toLocaleTimeString() : 'jusqu\'au redémarrage', [
-    ['Débannir', 'ghost', () => act(() => api('/api/admin/unban', 'POST', { name: b.name }))],
-  ])), 'Aucun banni.');
+function fmtUntil(x) { return x.until ? 'jusqu\'au ' + new Date(x.until).toLocaleString('fr-FR') : 'définitif'; }
+async function run(line) {
+  const r = await api('/api/admin/command', 'POST', { line });
+  cprint('> ' + line, 'in'); (r.out || []).forEach(l => cprint(l, r.ok ? '' : 'bad'));
+  return r;
 }
-function renderFiles(u) {
-  $('#stVersion').textContent = u.version || '-';
-  fill($('#files'), u.files.map(f => mkRow(f.name, mo(f.size) + ' · ' + ago(f.mtime), [
-    ['Supprimer', 'danger', () => confirm('Supprimer ' + f.name + ' ?') && act(() => api('/api/admin/updates?name=' + encodeURIComponent(f.name), 'DELETE'))],
-  ])), 'Aucun fichier publié pour le moment.');
-}
-async function refresh() {
-  const [d, u] = await Promise.all([api('/api/admin/users'), api('/api/admin/updates')]);
-  render(d); renderFiles(u); renderHelp(u);
-}
+function cprint(t, cls) { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = t; const o = $('#cout'); o.append(d); o.scrollTop = 1e9; }
+const withReason = (line) => { const r = prompt('Raison (facultatif) :'); return r === null ? null : line + (r.trim() ? ' ' + r.trim() : ''); };
+const askDur = () => { const d = prompt('Durée (ex : 30m, 2h, 7d, 1w) :', '1h'); return d && d.trim() ? d.trim() : null; };
+const mod = (label, cls, build) => [label, cls, () => act(async () => { const l = build(); if (l) await run(l); })];
 
-// ---------- aide au déploiement ----------
-let helpSeen = false;
-
-function nextVersion(v) {
-  const m = /^(\d+)\.(\d+)\.(\d+)/.exec(v || '');
-  return m ? m[1] + '.' + m[2] + '.' + (Number(m[3]) + 1) : '0.1.0';
-}
-
-// Contrôle que ce qui est publié est cohérent : latest.yml, installeur et blockmap.
-function checkPublication(u) {
-  const files = u.files || [];
-  if (!files.length) return { level: 'warn', items: [['warn', "Aucune version publiée pour le moment : dépose les 3 fichiers ci-dessous."]] };
-  const names = new Set(files.map(f => f.name));
-  const items = [];
-  if (names.has('latest.yml')) items.push(['ok', 'latest.yml présent (version ' + (u.version || '?') + ')']);
-  else items.push(['bad', "latest.yml absent : les apps ne verront aucune mise à jour."]);
-  if (u.installer) {
-    items.push(names.has(u.installer)
-      ? ['ok', 'Installeur ' + u.installer + ' présent']
-      : ['bad', 'latest.yml annonce ' + u.installer + " mais ce fichier n'est pas publié."]);
-    items.push(names.has(u.installer + '.blockmap')
-      ? ['ok', 'Fichier .blockmap présent']
-      : ['warn', ".blockmap absent : ça marche, mais les mises à jour seront téléchargées en entier (plus lent)."]);
-  }
-  const level = items.some(i => i[0] === 'bad') ? 'bad' : items.some(i => i[0] === 'warn') ? 'warn' : 'ok';
-  return { level, items };
-}
-
-function renderHelp(u) {
-  const nv = nextVersion(u.version);
-  $('#curVer').textContent = u.version || 'aucune';
-  document.querySelectorAll('.nextVer').forEach(el => { el.textContent = nv; });
-  $('#tplRelease').textContent = 'fa-release ' + nv + ' "ce que j’ai changé"';
-  $('#tplManual').textContent = ['git add .', 'git commit -m "ce que j’ai changé"', 'git push', 'git tag v' + nv, 'git push origin v' + nv].join('\n');
-
-  const c = checkPublication(u);
-  const box = $('#check'); box.className = 'check ' + c.level;
-  const head = document.createElement('div'); head.className = 'chead';
-  head.textContent = c.level === 'ok' ? 'Vérification : publication complète ✓' : c.level === 'warn' ? 'Vérification : à surveiller' : 'Vérification : publication incomplète';
-  const ul = document.createElement('ul');
-  c.items.forEach(([lvl, txt]) => { const li = document.createElement('li'); li.className = lvl; li.textContent = txt; ul.append(li); });
-  box.replaceChildren(head, ul);
-
-  if (!helpSeen && !u.version) { helpSeen = true; $('#help').hidden = false; } // la 1re fois, le guide s'ouvre tout seul
-}
-
-$('#helpBtn').onclick = () => { $('#help').hidden = !$('#help').hidden; };
-document.addEventListener('click', e => {
-  const b = e.target.closest('[data-copy]'); if (!b) return;
-  const text = $('#' + b.dataset.copy).textContent;
-  const done = () => { const old = b.textContent; b.textContent = 'Copié ✓'; setTimeout(() => { b.textContent = old; }, 1500); };
-  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(done).catch(() => prompt('Copie ce texte :', text));
-});
-
-
-// ---------- envoi des mises à jour ----------
-function upload(file) {
-  return new Promise(resolve => {
-    const box = document.createElement('div'); box.className = 'row up';
-    const g = document.createElement('div'); g.className = 'grow';
-    const n = document.createElement('div'); n.className = 'name'; n.textContent = file.name;
-    const s = document.createElement('div'); s.className = 'sub'; s.textContent = 'envoi… ' + mo(file.size);
-    const bar = document.createElement('div'); bar.className = 'bar'; const fillBar = document.createElement('i'); bar.append(fillBar);
-    g.append(n, s, bar); box.append(g); $('#uploads').append(box);
-    const end = (cls, msg) => { box.classList.add(cls); s.textContent = msg; bar.remove(); resolve(); };
-
-    if (!NAME_RE.test(file.name)) return end('err', 'refusé : seuls .exe, .yml et .blockmap sont acceptés');
-    const x = new XMLHttpRequest();
-    x.open('PUT', base + '/api/admin/updates?name=' + encodeURIComponent(file.name));
-    x.setRequestHeader('Authorization', 'Bearer ' + token);
-    x.upload.onprogress = e => { if (e.lengthComputable) fillBar.style.width = (e.loaded / e.total * 100) + '%'; };
-    x.onload = () => {
-      if (x.status === 200) return end('ok', 'publié ✓');
-      let m = 'erreur ' + x.status; try { m = JSON.parse(x.responseText).error || m; } catch {}
-      if (x.status === 413 || x.status === 502) m += ' (derrière un tunnel Cloudflare la limite est ~100 Mo : mets http://localhost:3000 dans le champ serveur)';
-      end('err', m);
-    };
-    x.onerror = () => end('err', 'erreur réseau');
-    x.send(file);
+let accounts = [];
+function renderAccounts() {
+  const q = $('#q').value.trim().toLowerCase().replace(/^[@#]/, '');
+  const list = accounts.filter(a => !q || [a.name, a.username, String(a.id), a.email].some(v => String(v).toLowerCase().includes(q)));
+  const rows = list.map(a => {
+    const t = '#' + a.id;
+    const btns = [
+      mod('Kick', 'ghost', () => a.online ? withReason('kick ' + t) : (alert(a.name + ' n\'est pas connecté.'), null)),
+      mod('Temp ban', 'danger', () => { const d = askDur(); return d && withReason('tempban ' + t + ' ' + d); }),
+      mod('Perma ban', 'danger', () => confirm('Bannir ' + a.name + ' définitivement ?') ? withReason('ban ' + t) : null),
+      mod('Mute', 'ghost', () => withReason('mute ' + t)),
+      mod('Temp mute', 'ghost', () => { const d = askDur(); return d && withReason('tempmute ' + t + ' ' + d); }),
+      mod('Unmute', 'ghost', () => 'unmute ' + t),
+    ];
+    if (a.ban) btns.push(mod('Débannir', 'ghost', () => 'unban ' + t));
+    const sub = '@' + a.username + ' · ' + a.email + (a.ban ? ' · banni ' + fmtUntil(a.ban) : '') + (a.mute ? ' · muet ' + fmtUntil(a.mute) : '');
+    const row = mkRow(a.name + '  #' + a.id, sub, btns);
+    const bd = document.createElement('span'); bd.className = 'badges';
+    [[a.online, 'on', 'EN LIGNE'], [a.op, 'op', 'OP'], [a.premium, 'prem', '✦ PREMIUM'], [!a.verified, 'bad', 'E-MAIL NON VÉRIFIÉ'], [a.ban, 'bad', 'BANNI'], [a.mute, 'bad', 'MUET']]
+      .forEach(([c, cls, txt]) => { if (c) { const b = document.createElement('span'); b.className = 'bdg ' + cls; b.textContent = txt; bd.append(b); } });
+    row.querySelector('.name').append(bd);
+    return row;
   });
+  fill($('#users'), rows, accounts.length ? 'Aucun résultat.' : 'Aucun compte pour le moment.');
 }
-async function uploadAll(fileList) {
-  // latest.yml en dernier : les apps ne voient la nouvelle version qu'une fois l'installeur complet
-  const files = [...fileList].sort((a, b) => (/\.yml$/i.test(a.name) ? 1 : 0) - (/\.yml$/i.test(b.name) ? 1 : 0));
-  $('#uploads').replaceChildren();
-  for (const f of files) await upload(f);
-  act(async () => {});
+function render(d) {
+  accounts = d.accounts;
+  $('#stOnline').textContent = d.online;
+  $('#stUptime').textContent = dur(d.uptime);
+  $('#stCount').textContent = d.accounts.length;
+  $('#mailWarn').hidden = !!d.mailConfigured;
+  renderAccounts();
 }
-const drop = $('#drop');
-$('#file').onchange = e => { uploadAll(e.target.files); e.target.value = ''; };
-['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
-['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
-drop.addEventListener('drop', e => uploadAll(e.dataTransfer.files));
+$('#q').oninput = renderAccounts;
+$('#cform').onsubmit = async e => {
+  e.preventDefault(); const l = $('#cin').value.trim(); if (!l) return; $('#cin').value = '';
+  try { await run(l); refresh().catch(() => {}); } catch (err) { cprint(err.message, 'bad'); }
+};
+async function refresh() { render(await api('/api/admin/accounts')); }
 
 // ---------- session ----------
 function show() {
   $('#login').hidden = true; $('#dash').hidden = false;
-  $('#dlLink').textContent = base + '/download';
   refresh().catch(() => {});
   clearInterval(timer); timer = setInterval(() => refresh().catch(() => {}), 4000);
 }
