@@ -18,15 +18,16 @@ case "$choice" in
   1) HOST=smtp.gmail.com; PORT=465; SECURE=tls
      echo "→ Gmail : active la validation en 2 étapes, puis crée un mot de passe d'application sur https://myaccount.google.com/apppasswords" ;;
   2) HOST=smtp-relay.brevo.com; PORT=587; SECURE=starttls
-     echo "→ Brevo : identifiant = l'e-mail de ton compte, mot de passe = ta clé SMTP (Paramètres > SMTP & API)" ;;
+     echo "→ Brevo : identifiant = le « Login » affiché dans SMTP & API > SMTP (du type 12345@smtp-brevo.com, PAS ton e-mail), mot de passe = ta clé SMTP" ;;
   3) read -rp "Serveur SMTP (ex : smtp.exemple.fr) : " HOST
      read -rp "Port (465 = TLS direct, 587 = STARTTLS) : " PORT
      [ "$PORT" = "465" ] && SECURE=tls || SECURE=starttls ;;
   *) echo "Choix invalide."; exit 1 ;;
 esac
 
-read -rp "Identifiant SMTP (souvent ton e-mail) : " USER_
-read -rsp "Mot de passe SMTP / d'application (caché) : " PASS; echo
+USER_=""; while [ -z "$USER_" ]; do read -rp "Identifiant SMTP (Brevo : le Login …@smtp-brevo.com ; Gmail : ton adresse) : " USER_; done
+PASS=""; while [ -z "$PASS" ]; do read -rsp "Mot de passe SMTP / clé (caché, colle puis Entrée) : " PASS; echo; done
+echo "→ Identifiant utilisé : $USER_  (mot de passe : ${#PASS} caractères)"
 read -rp "Adresse d'expéditeur [${USER_}] : " FROM_; FROM_="${FROM_:-$USER_}"
 case "$USER_$PASS$FROM_$HOST" in *$'\n'*|*\"*|*\\*) echo "Caractère interdit (guillemet, antislash ou retour à la ligne)."; exit 1 ;; esac
 
