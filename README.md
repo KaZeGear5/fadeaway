@@ -39,9 +39,21 @@ Un OP peut modérer et donner le Premium, mais pas `op` / `deop` / `verify`, et 
 | `tempban <user> <durée> [raison]` · `ban <user> [raison]` · `unban <user>` | bannissement |
 | `tempmute <user> <durée> [raison]` · `mute <user> [raison]` · `unmute <user>` | mute (texte) |
 | `premium give <user> [durée]` · `premium take <user>` · `premium list` | FadeAway Premium |
+| `unserver <user>` | retire un compte du serveur FadeAway |
 | `op`, `deop`, `ops`, `verify`, `say <message>`, `list`, `whois <user>`, `help` | divers |
 
 Durées : `30m`, `2h`, `7d`, `1w`. **Premium ✦** : badge, nom en dégradé animé, aura autour de la photo, avatar GIF animé, messages de 4000 caractères.
+
+## Se connecter avec Discord
+
+Un bouton « Continuer avec Discord » apparaît sur l'écran de connexion dès que Discord est configuré. Au premier passage, le compte est créé
+avec l'e-mail de Discord (déjà vérifié : pas de code à entrer), puis la personne choisit son pseudo et son sous-pseudo. Si l'e-mail correspond à un compte existant, les deux sont reliés.
+Un compte Discord sans e-mail vérifié est refusé.
+
+**Créer les identifiants** (une seule fois) : https://discord.com/developers/applications → *New Application* → onglet *OAuth2* → *Redirects* → *Add Redirect* :
+`https://fadeaway.kazegear5.duckdns.org/auth/discord/callback` (exactement) → *Save*. Copie le *Client ID*, puis *Reset Secret* pour obtenir le *Client Secret* (affiché une seule fois).
+
+Puis sur la Pi : `cd ~/fadeaway && ./deploy/setup-oauth.sh` (il demande l'ID et le secret, enregistre dans `/etc/fadeaway.env` et redémarre).
 
 ## Mettre en ligne sur la Raspberry Pi
 

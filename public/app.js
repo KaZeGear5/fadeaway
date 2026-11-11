@@ -152,6 +152,43 @@ $('authForm').addEventListener('submit', async ev => {
   btn.disabled = false;
 });
 
+/* ---- connexion Discord ---- */
+async function loadProviders() {
+  try {
+    const p = await (await fetch(API + '/api/providers')).json();
+    $('dBtn').hidden = !p.discord; $('social').hidden = !p.discord;
+    $('dBtn').href = API + '/auth/discord/start';
+  } catch { $('social').hidden = true; }
+}
+async function finishOAuth() {       // retour du fournisseur : /#oauth=<code> ou /#oauth_error=<message>
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const code = hash.get('oauth'), err = hash.get('oauth_error');
+  if (!code && !err) return false;
+  history.replaceState(null, '', location.pathname);
+  if (err) { show('auth'); $('authErr').textContent = err; return true; }
+  try {
+    const r = await api('/api/oauth/finish', { method: 'POST', auth: false, body: { code } });
+    token = r.token; store.set('fa_token', token); me = r.me; putUser(me); afterAuth();
+  } catch (e) { show('auth'); $('authErr').textContent = e.message; }
+  return true;
+}
+
+/* ---- choix du sous-pseudo après une première connexion Discord ---- */
+function handlePopup() {
+  if ($('modals').querySelector('.handle')) return;
+  const line = h('div', { class: 'msgline' });
+  const nameIn = h('input', { value: me.name, maxlength: 32 });
+  const userIn = h('input', { value: me.username, maxlength: 20, spellcheck: 'false', autocomplete: 'off' });
+  modal(h('div', { class: 'modal handle' },
+    h('h2', {}, 'Bienvenue sur FadeAway !'),
+    h('p', {}, 'Choisis ton pseudo (affiché) et ton sous-pseudo (unique : c\'est lui que tes amis utilisent pour t\'ajouter). Tu ne pourras plus changer le sous-pseudo ensuite.'),
+    h('h3', {}, 'Pseudo'), nameIn, h('h3', {}, 'Sous-pseudo'), userIn, line,
+    h('div', { class: 'actions' }, h('button', { onclick: async () => {
+      try { const r = await api('/api/profile/handle', { method: 'POST', body: { name: nameIn.value, username: userIn.value } }); me = r.me; putUser(me); closeModal(); renderAll(); if (!me.onboarded) joinPopup(); }
+      catch (e) { line.className = 'msgline bad'; line.textContent = e.message; }
+    } }, 'Valider'))));
+}
+
 /* ---- vérification de l'e-mail ---- */
 let cooldownT = null;
 function startCooldown(sec) {
@@ -258,6 +295,7 @@ async function loadFriends() {
 async function loadServer() {
   try {
     server = await api('/api/server'); server.members.forEach(putUser);
+    if (!server.joined && view && view.type === 'server') { view = null; setChatOpen(false); renderAll(); }
     if (server.joined && view && view.type === 'server') loadChan();
     renderNav(); renderHeader(); renderMembers();
   } catch {}
@@ -272,7 +310,7 @@ async function refreshAll() {
   renderMe();
   await Promise.all([loadFriends(), loadServer()]);
   if (view) select(view, true);
-  if (me && !me.onboarded) joinPopup();
+  if (me && me.needsHandle) handlePopup(); else if (me && !me.onboarded) joinPopup();
 }
 
 /* ============================== installation (PWA) ============================== */
@@ -382,7 +420,7 @@ function select(v, silent) {
 
 function renderHeader() {
   const t = $('chatTitle'), call = $('callBtn'), mb = $('membersBtn');
-  call.hidden = true; mb.hidden = true;
+  call.hidden = true; mb.hidden = true; $('leaveBtn').hidden = true;
   if (!view) { t.replaceChildren('Sélectionne quelqu\'un'); $('msgInput').disabled = true; return; }
   if (view.type === 'dm') {
     const u = userOf(view.id);
@@ -392,7 +430,7 @@ function renderHeader() {
     call.title = online.has(view.id) ? '' : 'Cette personne est hors ligne';
   } else {
     t.replaceChildren(h('span', {}, '# ' + (server ? server.channel.name : 'général')), h('span', { class: 'num' }, server ? server.name : ''));
-    t.style.cursor = ''; t.onclick = null; mb.hidden = false;
+    t.style.cursor = ''; t.onclick = null; mb.hidden = false; $('leaveBtn').hidden = false;
   }
 }
 
@@ -439,6 +477,10 @@ function renderMembers() {
   box.replaceChildren(h('div', { class: 'sec' }, `Membres — ${ms.length}`),
     ...ms.map(m => { const u = userOf(m.id); return navItem(false, avatar(u, 'st'), nameEl(u, false), `@${u.username}`, () => userCard(m.id), null, !online.has(m.id)); }));
 }
+$('leaveBtn').addEventListener('click', async () => {
+  if (!confirm('Quitter le serveur FadeAway ? Tu pourras le rejoindre à nouveau quand tu veux.')) return;
+  try { await api('/api/server/leave', { method: 'POST' }); view = null; setChatOpen(false); await loadServer(); renderAll(); toast('Tu as quitté le serveur.'); } catch (e) { fail(e); }
+});
 $('membersBtn').addEventListener('click', () => { showMembers = !showMembers; renderMembers(); });
 
 /* ---- envoi de messages ---- */
@@ -1071,7 +1113,8 @@ $('screenBtn').addEventListener('click', async () => {
 
 /* ============================== démarrage ============================== */
 (async function boot() {
-  setMode('login');
+  setMode('login'); loadProviders();
+  if (await finishOAuth()) return;
   if (token) {
     try {
       me = (await api('/api/me')).me; putUser(me);

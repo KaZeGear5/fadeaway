@@ -20,6 +20,7 @@ const { createModel } = require('./lib/model');
 const { createCommands, fmtRec } = require('./lib/commands');
 const { sniffImage } = require('./lib/images');
 const mail = require('./lib/mail');
+const oauth = require('./lib/oauth');
 const { json, safeDecode, readJson, readBody, serveFile, serveStatic } = require('./lib/http');
 
 const PORT = process.env.PORT || 3000;
@@ -113,6 +114,7 @@ const hooks = {
     if (message) sendTo(u.id, 'notice', { message });
   },
   announce(text) { broadcast('notice', { message: text }); },
+  membersChanged() { broadcast('server', {}); },
 };
 const commands = createCommands(model, hooks);
 
@@ -121,6 +123,7 @@ setInterval(() => {
   for (const u of Object.values(store.db.users)) if (cleanupPremium(u)) { pushMe(u); broadcast('profile', model.pub(u)); }
   for (const [k, b] of buckets) if (b.reset <= Date.now()) buckets.delete(k);
   for (const [k, t] of tickets) if (t.exp <= Date.now()) tickets.delete(k);
+  for (const m of [oauthStates, oauthCodes]) for (const [k, t] of m) if (t.exp <= Date.now()) m.delete(k);
   model.purgeSessions();
 }, 5 * 60000).unref();
 
@@ -210,6 +213,29 @@ route('POST', '/api/login', null, async c => {
   const ban = model.banOf(u);
   if (ban) throw new ApiError(403, banMessage(ban), { banned: true });
   return { token: model.newSession(u.id), me: model.meView(u) };
+});
+
+// --- connexion Discord
+const oauthStates = new Map();    // state -> { p, exp }
+const oauthCodes = new Map();     // code à usage unique -> { uid, exp }
+route('GET', '/api/providers', null, () => oauth.providers());
+route('POST', '/api/oauth/finish', null, c => {
+  limit('oauthfin:' + c.ip, 30, 600e3, 'Trop de tentatives.');
+  const k = String(c.body.code || ''); const t = oauthCodes.get(k); oauthCodes.delete(k);
+  const u = t && t.exp > Date.now() ? model.getUser(t.uid) : null;
+  if (!u) throw new ApiError(400, 'Connexion expirée, réessaie.');
+  const ban = model.banOf(u); if (ban) throw new ApiError(403, banMessage(ban), { banned: true });
+  return { token: model.newSession(u.id), me: model.meView(u) };
+});
+route('POST', '/api/profile/handle', U, c => {
+  const u = c.u;
+  if (!u.needsHandle) throw bad('Ton sous-pseudo est déjà choisi.');
+  const username = String(c.body.username || '').trim().toLowerCase().replace(/^@/, '');
+  if (!model.validUsername(username)) throw bad('Sous-pseudo invalide : 3 à 20 caractères, minuscules, chiffres, « _ » et « . » (certains noms sont réservés).');
+  if (c.body.name !== undefined) { const n = model.cleanName(c.body.name); if (!n) throw bad('Pseudo invalide (2 à 32 caractères).'); u.name = n; }
+  if (!model.setUsername(u, username)) throw new ApiError(409, 'Ce sous-pseudo est déjà pris.');
+  u.needsHandle = false; store.touchDb(); pushMe(u); broadcast('profile', model.pub(u));
+  return { me: model.meView(u) };
 });
 
 route('GET', '/api/me', U, c => ({ me: model.meView(c.u) }));
@@ -374,6 +400,12 @@ route('POST', '/api/server/join', V, c => {
   for (const m of members()) sendTo(m.id, 'server', {});
   return { ok: true };
 });
+route('POST', '/api/server/leave', V, c => {
+  c.u.servers = c.u.servers.filter(id => id !== OFFICIAL.id);
+  store.touchDb(); pushMe(c.u);
+  hooks.membersChanged();
+  return { ok: true };
+});
 route('POST', '/api/server/skip', V, c => { c.u.onboarded = true; store.touchDb(); pushMe(c.u); return { ok: true }; });
 route('GET', '/api/server/messages', V, c => {
   if (!inOfficial(c.u)) throw new ApiError(403, 'Rejoins le serveur pour voir ses messages.');
@@ -472,6 +504,70 @@ async function handleAdmin(req, res, url) {
   return json(res, 404, { error: 'Inconnu' });
 }
 
+// ---------- connexion Discord : /auth/<fournisseur>/start et /callback ----------
+const baseUrl = req => (process.env.PUBLIC_URL || `${(req.headers['x-forwarded-proto'] || 'http').split(',')[0]}://${req.headers.host}`).replace(/\/+$/, '');
+const redirect = (res, to, extra = {}) => { res.writeHead(302, { Location: to, 'Cache-Control': 'no-store', ...extra }); res.end(); };
+const cookieOf = (req, name) => (new RegExp(`(?:^|; )${name}=([^;]*)`).exec(req.headers.cookie || '') || [])[1];
+const handleBase = s => {
+  let h = String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9_.]/g, '').slice(0, 16);
+  while (h.length < 3) h += Math.floor(Math.random() * 10);
+  return h;
+};
+async function oauthLogin(p, prof) {
+  if (!prof.email || !model.validEmail(prof.email) || !prof.emailVerified)
+    throw new Error(`Ton compte ${oauth.labels[p]} n'a pas d'adresse e-mail vérifiée : impossible de te connecter avec.`);
+  let u = model.byOAuth(p, prof.id);
+  if (!u) {
+    u = model.byEmail(prof.email);
+    if (u) {                                         // même adresse (vérifiée par le fournisseur) : on relie au compte existant
+      u.oauth = { ...(u.oauth || {}), [p]: prof.id };
+      if (!u.verified) {                             // le compte avait été créé sans preuve de l'adresse : on coupe l'accès à qui l'a créé
+        u.verified = true; u.code = null;
+        u.pass = await model.hashPassword(crypto.randomBytes(32).toString('base64url'));
+        dropAllSessions(u.id);
+      }
+      store.touchDb();
+    } else {
+      let username = handleBase(prof.name || prof.email.split('@')[0]);
+      while (model.byUsername(username) || !model.validUsername(username)) username = handleBase(prof.name || 'user').slice(0, 14) + Math.floor(Math.random() * 1000);
+      const r = await model.createUser({ email: prof.email, password: crypto.randomBytes(32).toString('base64url'), name: model.cleanName(prof.name) || username, username });
+      if (r.error) throw new Error('Impossible de créer le compte, réessaie.');
+      u = r.user; u.verified = true; u.needsHandle = true; u.oauth = { [p]: prof.id }; store.touchDb();
+      console.log(`Nouveau compte #${u.id} via ${p} : @${u.username} (${u.email})`);
+    }
+  }
+  const ban = model.banOf(u); if (ban) throw new Error(banMessage(ban));
+  const code = crypto.randomBytes(24).toString('base64url');
+  oauthCodes.set(code, { uid: u.id, exp: Date.now() + 60000 });
+  return code;
+}
+async function handleAuth(req, res, url) {
+  const m = /^\/auth\/(discord)\/(start|callback)$/.exec(url.pathname);
+  if (!m || req.method !== 'GET') { res.writeHead(404); return res.end('Not found'); }
+  const [, p, step] = m;
+  const fail = msg => redirect(res, '/#oauth_error=' + encodeURIComponent(msg), { 'Set-Cookie': 'fa_oauth=; Path=/auth; Max-Age=0' });
+  if (!oauth.config(p)) return fail(`La connexion avec ${oauth.labels[p]} n'est pas activée sur ce serveur.`);
+  const redirectUri = `${baseUrl(req)}/auth/${p}/callback`;
+  if (step === 'start') {
+    limit('oauth:' + ipOf(req), 30, 600e3, 'Trop de tentatives.');
+    const state = crypto.randomBytes(24).toString('base64url');
+    oauthStates.set(state, { p, exp: Date.now() + 10 * 60000 });
+    const secure = redirectUri.startsWith('https') ? '; Secure' : '';
+    return redirect(res, oauth.authUrl(p, redirectUri, state), { 'Set-Cookie': `fa_oauth=${state}; Path=/auth; Max-Age=600; HttpOnly; SameSite=Lax${secure}` });
+  }
+  const state = url.searchParams.get('state') || '';
+  const st = oauthStates.get(state); oauthStates.delete(state);
+  if (url.searchParams.get('error')) return fail(`Connexion ${oauth.labels[p]} annulée.`);
+  if (!st || st.p !== p || st.exp < Date.now() || cookieOf(req, 'fa_oauth') !== state) return fail('Connexion expirée ou invalide, réessaie.');
+  const code = url.searchParams.get('code');
+  if (!code) return fail('Réponse incomplète du fournisseur.');
+  try {
+    const prof = await oauth.fetchProfile(p, code, redirectUri);
+    const ticket = await oauthLogin(p, prof);
+    return redirect(res, '/#oauth=' + ticket, { 'Set-Cookie': 'fa_oauth=; Path=/auth; Max-Age=0' });
+  } catch (e) { console.error(`Connexion ${p} : ${e.message}`); return fail(e.message); }
+}
+
 // ---------- serveur HTTP ----------
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
@@ -510,6 +606,9 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+
+    // ---- connexion Discord
+    if (url.pathname.startsWith('/auth/')) return await handleAuth(req, res, url);
 
     // ---- API admin
     if (url.pathname.startsWith('/api/admin/')) return await handleAdmin(req, res, url);

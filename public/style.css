@@ -237,3 +237,10 @@ input[type=range]{padding:0;height:6px;accent-color:var(--accent)}
   .console{right:8px;left:8px;width:auto;bottom:8px}
   #meCard .btns{flex-wrap:wrap}
 }
+
+/* ---------- connexion Discord ---------- */
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:2px 0 8px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--border)}
+.social{display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;margin-bottom:8px;border-radius:12px;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer;transition:transform .15s,filter .15s}
+.social:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.social.discord{background:#5865f2;color:#fff}
